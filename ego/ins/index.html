@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Insurgency Tactics</title>
+		<meta http-equiv="content-language" content="en">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="author" content="Dirk Gadsden">
+		<meta name="description" content="Tactical map editor for Insurgency">
+		<meta name="keywords" content="insurgency, source mods, ins">
+		<link rel="stylesheet" href="style.css" type="text/css">
+		<script type="text/javascript" src="javascript/jquery.1.4.2.min.js"></script>
+		<script type="text/javascript" src="javascript/jquery-ui.1.8.4.min.js"></script>
+		<script type="text/javascript" src="javascript/raphael.min.js"></script>
+		<script type="text/javascript"><!--
+		
+		var Keys = {
+			space: 32
+		}
+		var canvas = undefined;
+		var Map = function(img, name, w, h) {
+			this.image = img;
+			this.name = name;
+			this.width = w;this.height = h;
+		}
+		
+		var Insurgency = {
+			maps: [
+				new Map('ins_abdallah.jpg', 'Abdallah', 1106, 909)
+			],
+			test: 'test'
+		}
+		
+		function load_map(map) {
+			if(!(typeof(canvas) == 'undefined')) {
+				canvas.remove();
+			}
+			canvas = Raphael(document.getElementById("map"), map.width, map.height);
+			canvas.image("maps/"+map.image, 0, 0, map.width, map.height);
+		}
+		
+		
+		$(window).keydown(function(event) {
+			//code = event.keyCode;
+			if(event.keyCode == Keys.space) {
+				$("#map").draggable("option", "disabled", false);
+				$("#map").css('cursor', 'move');
+			}
+		});
+		$(window).keyup(function(event) {
+			if(event.keyCode == Keys.space) {
+				$("#map").draggable("option", "disabled", true);
+				$("#map").css('cursor', 'default');
+			}
+		});
+		
+		// Initialization
+		$(document).ready(function() {
+			$("#map").draggable({disabled: true});
+			load_map(Insurgency.maps[0]);
+		});
+		--></script>
+	</head>
+	<body>
+		<div id="tools">
+			<div class="set">
+				Tools
+			</div>
+		</div>
+		<div id="map"></div>
+		
+	</body>
+</html>
