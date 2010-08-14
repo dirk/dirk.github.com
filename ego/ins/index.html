@@ -10,26 +10,46 @@
 		<link rel="stylesheet" href="style.css" type="text/css">
 		<script type="text/javascript" src="javascript/jquery.1.4.2.min.js"></script>
 		<script type="text/javascript" src="javascript/jquery-ui.1.8.4.min.js"></script>
-		<script type="text/javascript" src="javascript/raphael.min.js"></script>
+		<script type="text/javascript" src="javascript/raphael.js"></script>
 		<script type="text/javascript"><!--
-		
-		var Keys = {
-			space: 32
-		}
-		var canvas = undefined;
+		// Objects
 		var Map = function(img, name, w, h) {
 			this.image = img;
 			this.name = name;
 			this.width = w;this.height = h;
 		}
-		
+		// Essentials
+		var Keys = {
+			space: 32,
+			l: 76
+		}
+		var Tools = {
+			Line: {
+				drawing: false,
+				start: {x: 10, y: 10},
+				line: undefined,
+				stroke: {
+					stroke: "#0f0",  
+					"stroke-width": 4,
+					"stroke-linecap": 'round',
+					"stroke-linejoin": 'round',
+					"stroke-opacity": 0.6,   
+					"fill-opacity": 0
+				}
+			}
+		}
+		var canvas = undefined;
+		//var tool = undefined;
+		var tool = 'Line';
+		var dragging = false;
+		// Configuration
 		var Insurgency = {
 			maps: [
 				new Map('ins_abdallah.jpg', 'Abdallah', 1106, 909)
 			],
 			test: 'test'
 		}
-		
+		// Functionality
 		function load_map(map) {
 			if(!(typeof(canvas) == 'undefined')) {
 				canvas.remove();
@@ -37,33 +57,76 @@
 			canvas = Raphael(document.getElementById("map"), map.width, map.height);
 			canvas.image("maps/"+map.image, 0, 0, map.width, map.height);
 		}
+		function cancel_line_draw() {
+			try {
+				Tools.Line.line.remove();
+			} catch (e) {}
+		}
 		
-		
+		// Events
 		$(window).keydown(function(event) {
 			//code = event.keyCode;
 			if(event.keyCode == Keys.space) {
 				$("#map").draggable("option", "disabled", false);
+				dragging = true;
 				$("#map").css('cursor', 'move');
+			} else if(event.keyCode == Keys.l) {
+				//Tools.Line.drawing = false;
+				//console.log('Selected tool: Line');
+				tool = 'Line';
+				if(Tools.Line.drawing == true) {
+					cancel_line_draw();
+					Tools.Line.drawing = false;
+				}
 			}
 		});
 		$(window).keyup(function(event) {
 			if(event.keyCode == Keys.space) {
 				$("#map").draggable("option", "disabled", true);
+				dragging = true;
 				$("#map").css('cursor', 'default');
 			}
 		});
+		
 		
 		// Initialization
 		$(document).ready(function() {
 			$("#map").draggable({disabled: true});
 			load_map(Insurgency.maps[0]);
+			
+			//SpGraph.graph.path({stroke: c}).moveTo(0, x).lineTo(390,x);  
+			
+			
+			$('#map').mousemove(function(event) {
+				if(Tools.Line.drawing == true) {
+					cancel_line_draw();
+					
+					Tools.Line.line = canvas.path(Tools.Line.stroke);
+					Tools.Line.line.moveTo(Tools.Line.start.x, Tools.Line.start.y).lineTo(event.offsetX, event.offsetY);
+				}
+			});
+			$('#map').click(function(event) {
+				if(tool == 'Line') {
+					if(Tools.Line.drawing) {
+						canvas.path(Tools.Line.stroke).moveTo(Tools.Line.start.x, Tools.Line.start.y).lineTo(event.offsetX, event.offsetY);
+						
+						cancel_line_draw();
+						
+						Tools.Line.start = {x: event.offsetX, y: event.offsetY};
+					} else {
+						
+						Tools.Line.start = {x: event.offsetX, y: event.offsetY};
+						Tools.Line.drawing = true;
+					}
+				}
+			})
 		});
 		--></script>
 	</head>
 	<body>
 		<div id="tools">
 			<div class="set">
-				Tools
+				Line tool currently active. Click to start drawing a line, click again to finish; press "L" to cancel drawing a line.<br /><br />Press space to enter drag mode; click and drag with mouse while space key is down to drag.<br />(You can drag at any time, including while drawing a line.)
 			</div>
 		</div>
 		<div id="map"></div>

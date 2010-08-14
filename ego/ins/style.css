@@ -10,7 +10,7 @@ body {
 	top: 10px;left: 10px;
 }
 #tools .set {
-	width: 40px;
+	/*width: 40px;*/padding: 10px;
 	background: #ccc;
 	border: 2px solid #eee;
 	-moz-border-radius: 5px;-webkit-border-radius: 5px;
