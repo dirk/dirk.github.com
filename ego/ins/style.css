@@ -1,18 +1,34 @@
+* {margin: 0;padding: 0;}
 body {
 	font: 12px Arial, sans-serif;
-	background: #000;
+	background: #888;
 	overflow: hidden;
 }
 
-#map {position: relative;z-index: 0;}
+#map {position: relative;z-index: 0;border: 20px solid #000;top: 10px;left: 60px;
+	-moz-box-shadow: 0 0 10px #222;-webkit-box-shadow: 0 0 10px #222;
+}
 #tools {
 	position: fixed;z-index: 10;
 	top: 10px;left: 10px;
 }
 #tools .set {
-	/*width: 40px;*/padding: 10px;
+	width: 30px;float: left;
+	background: #fff;
+	border: 2px solid #fff;
+	-moz-border-radius: 5px;-webkit-border-radius: 5px;
+	-moz-box-shadow: 0 0 5px #000;-webkit-box-shadow: 0 0 5px #000;
+}
+#tools .set img {
+	margin: 0 0 1px 0;
+	border: 7px solid #eee;background: #eee;display: block;-moz-border-radius: 3px;-webkit-border-radius: 3px;
+}
+#tools .set img.active {border-color: #bbb;background-color: #bbb;}
+#tools .help {
+	/*width: 40px;*/padding: 10px;margin: 0 0 0 10px;float: left;
 	background: #ccc;
 	border: 2px solid #eee;
 	-moz-border-radius: 5px;-webkit-border-radius: 5px;
 	-moz-box-shadow: 0 0 5px #000;-webkit-box-shadow: 0 0 5px #000;
 }
+

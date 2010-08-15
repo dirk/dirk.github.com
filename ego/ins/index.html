@@ -10,7 +10,7 @@
 		<link rel="stylesheet" href="style.css" type="text/css">
 		<script type="text/javascript" src="javascript/jquery.1.4.2.min.js"></script>
 		<script type="text/javascript" src="javascript/jquery-ui.1.8.4.min.js"></script>
-		<script type="text/javascript" src="javascript/raphael.js"></script>
+		<script type="text/javascript" src="javascript/raphael.min.js"></script>
 		<script type="text/javascript"><!--
 		// Objects
 		var Map = function(img, name, w, h) {
@@ -21,7 +21,11 @@
 		// Essentials
 		var Keys = {
 			space: 32,
-			l: 76
+			l: 76,
+			e: 69,
+			h: 72,
+			q: 81,
+			u: 85
 		}
 		var Tools = {
 			Line: {
@@ -38,14 +42,16 @@
 				}
 			}
 		}
+		var item_history = new Array();
 		var canvas = undefined;
 		//var tool = undefined;
-		var tool = 'Line';
+		var tool = undefined;
 		var dragging = false;
 		// Configuration
 		var Insurgency = {
 			maps: [
-				new Map('ins_abdallah.jpg', 'Abdallah', 1106, 909)
+				new Map('ins_abdallah.jpg',     'Abdallah (Full)', 1106, 909),
+				new Map('ins_abdallah_w800.jpg', 'Abdallah (Normal)', 800, 658)
 			],
 			test: 'test'
 		}
@@ -54,30 +60,108 @@
 			if(!(typeof(canvas) == 'undefined')) {
 				canvas.remove();
 			}
+			$('#map').width(map.width);
+			$('#map').height(map.height);
+			$('#map').html('');
 			canvas = Raphael(document.getElementById("map"), map.width, map.height);
-			canvas.image("maps/"+map.image, 0, 0, map.width, map.height);
+			canvas.image('maps/'+map.image, 0, 0, map.width, map.height);
 		}
 		function cancel_line_draw() {
 			try {
 				Tools.Line.line.remove();
 			} catch (e) {}
 		}
+		function highlight_tool(toolname) {
+			$('#tools .set img').removeClass('active');
+			$('#'+toolname.toLowerCase()+'_tool').addClass('active');
+		}
+		function bind_hover_remove(item) {
+			item[0].onmouseover = function(event) {
+				if(tool == 'Eraser') {
+					item.attr('stroke-opacity', 0.3);
+				}
+			}
+			item[0].onmouseout = function(event) {
+				if(tool == 'Eraser') {
+					item.attr('stroke-opacity', Tools.Line.stroke['stroke-opacity']);
+				}
+			}
+			item[0].onclick = function(event) {
+				if(tool == 'Eraser') {
+					item.remove();
+				}
+			}
+		}
+		function cull_history() {
+			// Remove suspicious items (EG: Ones that have no parents, and have therefore been deleted from the canvas).
+			new_item_history = new Array();
+			for(i in item_history) {
+				try {
+					if(item_history[i][0].parentNode != null) {
+						new_item_history.push(item_history[i]);
+					}
+				} catch(e) {console.log(e);}
+			}
+			item_history = new_item_history;
+		}
+		function undo_tool() {
+			cull_history(); // Culling the items in the history.
+			// Actually removing the most recent item.
+			if(item_history.length > 0) {
+				item = item_history.pop();
+				item.remove();
+			}
+		}
+		function show_help(toolname) {
+			if($('#tools .help div.'+toolname.toLowerCase()+'_tool').length > 0) {
+				$('#tools .help div').hide();
+				$('#tools .help div.'+toolname.toLowerCase()+'_tool').show();
+				$('#tools .help').fadeIn('fast');
+			}
+			
+		}
+		function hide_help() {
+			$('#tools .help').fadeOut('fast', function() {
+				$('#tools .help div').hide();
+			});
+			
+		}
 		
 		// Events
 		$(window).keydown(function(event) {
-			//code = event.keyCode;
+			//alert(event.keyCode);
 			if(event.keyCode == Keys.space) {
 				$("#map").draggable("option", "disabled", false);
 				dragging = true;
 				$("#map").css('cursor', 'move');
 			} else if(event.keyCode == Keys.l) {
-				//Tools.Line.drawing = false;
-				//console.log('Selected tool: Line');
+				console.log('Selected tool: Line');
 				tool = 'Line';
+				highlight_tool('line');
 				if(Tools.Line.drawing == true) {
 					cancel_line_draw();
 					Tools.Line.drawing = false;
 				}
+				
+				show_help('line');
+			} else if(event.keyCode == Keys.e) {
+				console.log('Selected tool: Eraser');
+				tool = 'Eraser';
+				highlight_tool('eraser');
+				
+				hide_help();
+			} else if(event.keyCode == Keys.h) {
+				if($('#tools .help').is(':visible')) {
+					hide_help();
+				} else {
+					show_help(tool);
+				}
+			} else if(event.keyCode == Keys.q) {
+				tool = 'Help';
+				highlight_tool('help');
+				show_help('help');
+			} else if(event.keyCode == Keys.u) {
+				undo_tool();
 			}
 		});
 		$(window).keyup(function(event) {
@@ -88,27 +172,38 @@
 			}
 		});
 		
+		var canvase = undefined;
 		
 		// Initialization
 		$(document).ready(function() {
-			$("#map").draggable({disabled: true});
-			load_map(Insurgency.maps[0]);
+			$('#line_tool').click(function()   {tool = 'Line';  highlight_tool('line');  show_help('line');});
+			$('#eraser_tool').click(function() {tool = 'Eraser';highlight_tool('eraser');hide_help();});
+			$('#help_tool').click(function()   {tool = 'Help';  highlight_tool('help');  show_help('help');});
+			$('#undo_tool').click(function() {undo_tool();});
 			
-			//SpGraph.graph.path({stroke: c}).moveTo(0, x).lineTo(390,x);  
+			$('#tools .help a.hide').click(function() {hide_help();});
+			$("#map").draggable({disabled: true});
+			load_map(Insurgency.maps[1]);
 			
 			
 			$('#map').mousemove(function(event) {
 				if(Tools.Line.drawing == true) {
 					cancel_line_draw();
 					
-					Tools.Line.line = canvas.path(Tools.Line.stroke);
-					Tools.Line.line.moveTo(Tools.Line.start.x, Tools.Line.start.y).lineTo(event.offsetX, event.offsetY);
+					//Tools.Line.line = canvas.path(Tools.Line.stroke);
+					//Tools.Line.line.moveTo(Tools.Line.start.x, Tools.Line.start.y).lineTo(event.offsetX, event.offsetY);
+					temp_line = canvas.path('M'+Tools.Line.start.x+' '+Tools.Line.start.y+'L'+event.offsetX+' '+event.offsetY).attr(Tools.Line.stroke);
+					temp_line.attr(Tools.Line.stroke);
+					Tools.Line.line = temp_line;
 				}
 			});
 			$('#map').click(function(event) {
 				if(tool == 'Line') {
 					if(Tools.Line.drawing) {
-						canvas.path(Tools.Line.stroke).moveTo(Tools.Line.start.x, Tools.Line.start.y).lineTo(event.offsetX, event.offsetY);
+						//final_line = canvas.path(Tools.Line.stroke).moveTo(Tools.Line.start.x, Tools.Line.start.y).lineTo(event.offsetX, event.offsetY);
+						final_line = canvas.path('M'+Tools.Line.start.x+' '+Tools.Line.start.y+'L'+event.offsetX+' '+event.offsetY).attr(Tools.Line.stroke);
+						bind_hover_remove(final_line);
+						item_history.push(final_line);
 						
 						cancel_line_draw();
 						
@@ -126,10 +221,27 @@
 	<body>
 		<div id="tools">
 			<div class="set">
-				Line tool currently active. Click to start drawing a line, click again to finish; press "L" to cancel drawing a line.<br /><br />Press space to enter drag mode; click and drag with mouse while space key is down to drag.<br />(You can drag at any time, including while drawing a line.)
+				<img id="line_tool" src="images/icons/highlighter.png" title="Hotkey: L" />
+				<img id="eraser_tool" src="images/icons/eraser.png" title="Hotkey: E" />
+				<img id="undo_tool" src="images/icons/undo.png" />
+				<img id="help_tool" src="images/icons/question.png" title="Hotkey: Q" />
+				<!--<a id="save_tool">Save</a>-->
+			</div>
+			<div class="help" style="display: none;">
+				<div class="line_tool" style="display: none;">
+					Click to start drawing a line, click again to finish; press "L" to cancel drawing a line.
+				</div>
+				<div class="help_tool" style="display: none;">
+					Built by <a href="http://esherido.com/" target="_blank">Dirk Gadsden</a>.<br />
+					Icons by Fugue.<br />
+					Maps by -Sweet- | Swedish Extraterrestrials.
+				</div>
+				<a class="hide" href="#">Hide</a>
 			</div>
 		</div>
+		
 		<div id="map"></div>
+		
 		
 	</body>
 </html>
